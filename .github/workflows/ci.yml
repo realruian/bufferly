@@ -1,0 +1,28 @@
+# CI：SwiftPM 可执行包构建（macOS 26 / Swift 6.2）
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 构建 · SwiftPM (macOS)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: 工具链版本
+        run: |
+          swift --version
+          xcodebuild -version
+      - name: 解析依赖（GRDB）
+        run: swift package resolve
+      - name: 构建（debug）
+        run: swift build -v
+      - name: 构建（release）
+        run: swift build -c release
