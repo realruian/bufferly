@@ -4,105 +4,79 @@
 
 # Bufferly
 
-**为开发者和 AI 工作流打造的本地优先剪贴板工作台**
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-<sub>A local-first clipboard workspace for developers & AI-heavy workflows</sub>
-
-<br/>
+**A local-first clipboard workspace for developers and AI-heavy workflows**
 
 ![Platform](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Liquid Glass](https://img.shields.io/badge/UI-Liquid%20Glass-7AA7FF)
 [![License](https://img.shields.io/github/license/Innate-Labs/bufferly?color=blue)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/Innate-Labs/bufferly?style=social)](https://github.com/Innate-Labs/bufferly)
-
-<br/>
-<br/>
-
-[![⬇ 下载 DMG](https://img.shields.io/badge/⬇%20下载-Bufferly.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Innate-Labs/bufferly/releases/latest)
-
-<sub>最新版本见 <a href="https://github.com/Innate-Labs/bufferly/releases/latest">Releases</a></sub>
 
 </div>
 
----
+Bufferly automatically organizes copied code, commands, links, JSON, prompts, images, files, and temporary text into a searchable and reusable local workspace. It is designed for developer and AI workflows rather than as a generic clipboard replacement, and clipboard history stays on your Mac by default.
 
-复制过的代码、命令、链接、JSON、prompt、临时文本，Bufferly 自动把它们整理成**可搜索、可复用、可安全粘贴**的本地工作台 —— 不是又一个通用剪贴板平替，而是为**开发者和 AI heavy user** 量身做的。一切只存在你自己的机器上，默认保护隐私。
+## Features
 
-<p align="center">
-  <img src="docs/screenshot.png" width="100%" alt="Bufferly Quick Panel" />
-</p>
+- **Automatic capture and deduplication** — new clipboard items appear first without filling the history with duplicates.
+- **Fuzzy search and relevance ranking** — find `database connection` with a short query such as `dbcon`.
+- **Type-aware cards** — distinguish URLs, code, JSON, commands, email, images, files, and rich text at a glance.
+- **Native paste-back** — select an item and press Return to restore it to the clipboard and paste it into the previous app.
+- **Pinned snippets** — keep frequently reused content in a dedicated section.
+- **Developer transforms** — format or minify JSON and remove tracking parameters from URLs.
+- **Sensitive-content filtering** — redact or discard detected tokens, passwords, `.env` values, and API keys.
+- **Native macOS experience** — Liquid Glass, semantic colors, SF Symbols, light/dark appearance, and Reduce Motion support.
 
-## ✨ 特性
+## Keyboard shortcuts
 
-- 📋 **自动监听 + 去重** —— 复制即入库，呼出瞬间补抓，最新的永远在第一张
-- 🔍 **模糊搜索 + 相关度排序** —— 敲 `dbcon` 也能搜出 `database connection`，打错字也行
-- 🎴 **Paste 式卡片墙** —— 横向卡片按类型着色，来源 App 图标一眼可辨
-- 🏷️ **自动类型识别** —— URL / 代码 / JSON / 命令 / 邮件 自动归类
-- 🖼️ **不止文本** —— 图片、文件、富文本（RTF）都能存、能预览、能原样粘回
-- 🔒 **敏感内容过滤** —— token、密码、`.env` value、API key 命中后脱敏或不入库
-- 📌 **Pin 常用片段** —— 固定到独立分区，随取随用
-- ⚡ **回车粘贴** —— 选中回车写回剪贴板，并自动粘回原前台 App
-- 🛠️ **开发者转换** —— JSON 格式化 / 压缩、URL 清理（去 tracking 参数）
-- 🎨 **原生 macOS 26 体验** —— Apple Liquid Glass、语义色、SF Symbols，支持 Light / Dark、Reduce Motion
+| Action | Shortcut |
+| --- | --- |
+| Show or hide the panel | `⌥ Space` by default |
+| Move between cards | Arrow keys |
+| Paste the selected item | `Return` |
+| Quick Look preview | `Space` when search is empty |
+| Copy and close without pasting | `⌥ Return` |
+| Pin or unpin | `⌘P` |
+| Delete the selected item | `⌘⌫` |
+| Clear search or close | `Esc` |
 
-## ⌨️ 快捷键
+## Installation
 
-| 操作 | 快捷键 |
-|---|---|
-| 呼出 / 隐藏面板 | `⌥ Space`（可在设置中更改） |
-| 选择上一张 / 下一张 | `←` `→`（或 `↑` `↓`） |
-| 粘贴选中 | `Return` |
-| Quick Look 预览 | `Space`（搜索为空时） |
-| 仅复制后关闭 | `⌥ Return` |
-| 固定 / 取消固定 | `⌘P` |
-| 删除选中 | `⌘⌫` |
-| 清空搜索 / 关闭面板 | `Esc` |
+### Download the app
 
-## 📦 安装
+Download the latest DMG from the [Bufferly releases page](https://github.com/Innate-Labs/bufferly/releases/latest), open it, and drag Bufferly into Applications. The current build requires Apple Silicon and macOS 26 Tahoe.
 
-### 直接用（DMG）
+Because the app is not notarized, use right-click → **Open** the first time.
 
-1. 到 **[Releases 页面](https://github.com/Innate-Labs/bufferly/releases/latest)** 下载最新的 `Bufferly-x.y.z.dmg`
-2. 打开 DMG，把 Bufferly 拖到「应用程序」
-3. **首次启动右键「打开」**（未公证，需绕过一次 Gatekeeper）
-
-> 需要 **Apple Silicon + macOS 26 (Tahoe)**。
-
-### 从源码构建
+### Build from source
 
 ```bash
-git clone https://github.com/Innate-Labs/bufferly.git
+git clone https://github.com/realruian/bufferly.git
 cd bufferly
 
-swift run Bufferly            # 开发运行
-bash scripts/build-app.sh     # 打包 .app → .build/Bufferly.app
-bash scripts/build-dmg.sh     # 打包 .dmg → .build/Bufferly.dmg
+swift run Bufferly
+bash scripts/build-app.sh
+bash scripts/build-dmg.sh
 ```
 
-> **自动粘贴**依赖辅助功能权限：系统设置 → 隐私与安全性 → 辅助功能 → 允许 Bufferly。未授权也能用，内容已写回剪贴板，自己按 `⌘V` 即可。
+Automatic paste-back requires Accessibility permission under System Settings → Privacy & Security → Accessibility. Without it, Bufferly can still restore the selected item to the clipboard for a manual `⌘V`.
 
-## 🔒 隐私
+## Privacy
 
-- 剪贴板历史**只存本地** SQLite：`~/Library/Application Support/Bufferly/`
-- **不做云同步、不上传任何内容**
-- 敏感内容默认过滤，可选脱敏占位或直接丢弃
-- 链接预览默认**关闭**（开启才联网获取标题/图标）
+- Clipboard history is stored locally in SQLite under `~/Library/Application Support/Bufferly/`.
+- Bufferly does not sync or upload clipboard contents.
+- Sensitive content can be redacted or excluded from storage.
+- Link previews are disabled by default and access the network only when enabled.
 
-## 🛠️ 技术栈
+## Technology
 
-Swift · SwiftUI · AppKit · [GRDB](https://github.com/groue/GRDB.swift) / SQLite · Keychain
+Swift 6.2 · SwiftUI · AppKit · [GRDB](https://github.com/groue/GRDB.swift) · SQLite · Keychain
 
-## 🗺️ 路线图
+## Roadmap and contributing
 
-已完成核心剪贴板能力 + 图片/文件/富文本 + 模糊搜索。下一步是 AI 差异化楔子（MCP server、上下文打包、本地 LLM 转换）。详见 **[ROADMAP.md](ROADMAP.md)**。
+See [ROADMAP.md](ROADMAP.md) for planned AI workflow features. Contributions are welcome; read [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md) before changing product behavior or visuals.
 
-## 🤝 贡献
-
-欢迎 issue 与 PR。设计规范见 [`DESIGN.md`](DESIGN.md)，项目说明见 [`CLAUDE.md`](CLAUDE.md)。
-
-## 📄 License
+## License
 
 [MIT](LICENSE) © [Innate Labs](https://github.com/Innate-Labs)
-
-<div align="center"><sub>Built for developers who copy 50+ things a day.</sub></div>
