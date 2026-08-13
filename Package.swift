@@ -3,25 +3,29 @@
 import PackageDescription
 
 let package = Package(
-    name: "Bufferly",
+    name: "PastePop",
     platforms: [
         .macOS(.v26)
     ],
     products: [
-        .executable(name: "Bufferly", targets: ["Bufferly"])
+        .executable(name: "PastePop", targets: ["PastePop"])
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0")
     ],
     targets: [
         .executableTarget(
-            name: "Bufferly",
+            name: "PastePop",
             dependencies: [
                 .product(name: "GRDB", package: "GRDB.swift")
             ],
             resources: [
                 .process("Resources")
             ]
+        ),
+        .testTarget(
+            name: "PastePopTests",
+            dependencies: ["PastePop"]
         )
     ]
 )

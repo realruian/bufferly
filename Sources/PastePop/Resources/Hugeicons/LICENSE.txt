@@ -1,0 +1,4 @@
+Hugeicons Free Icons (Stroke Rounded)
+来源：@hugeicons/core-free-icons (npm) — https://hugeicons.com
+许可证：MIT
+本目录内 SVG 由该包的图标数据生成，随 App 离线分发。

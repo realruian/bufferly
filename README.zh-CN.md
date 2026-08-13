@@ -1,71 +1,71 @@
 <div align="center">
 
-<img src="docs/icon.png" width="120" alt="Bufferly" />
+<img src="docs/icon.png" width="120" alt="PastePop" />
 
-# Bufferly
+# PastePop
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**为开发者和 AI 工作流打造的本地优先剪贴板工作台**
-
-<sub>A local-first clipboard workspace for developers & AI-heavy workflows</sub>
-
-<br/>
+**普通 macOS 用户的本地优先剪贴板助手**
 
 ![Platform](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Liquid Glass](https://img.shields.io/badge/UI-Liquid%20Glass-7AA7FF)
-[![License](https://img.shields.io/github/license/Innate-Labs/bufferly?color=blue)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/Innate-Labs/bufferly?style=social)](https://github.com/Innate-Labs/bufferly)
+[![License](https://img.shields.io/github/license/realruian/bufferly?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/realruian/bufferly?style=social)](https://github.com/realruian/bufferly)
 
 <br/>
-<br/>
 
-[![⬇ 下载 DMG](https://img.shields.io/badge/⬇%20下载-Bufferly.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Innate-Labs/bufferly/releases/latest)
+[![下载 DMG](https://img.shields.io/badge/下载-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/bufferly/releases/latest)
 
-<sub>最新版本见 <a href="https://github.com/Innate-Labs/bufferly/releases/latest">Releases</a></sub>
+<sub>最新版本见 <a href="https://github.com/realruian/bufferly/releases/latest">Releases</a></sub>
 
 </div>
 
 ---
 
-复制过的代码、命令、链接、JSON、prompt、临时文本，Bufferly 自动把它们整理成**可搜索、可复用、可安全粘贴**的本地工作台 —— 不是又一个通用剪贴板平替，而是为**开发者和 AI heavy user** 量身做的。一切只存在你自己的机器上，默认保护隐私。
+复制过的文字、链接、图片和文件，PastePop 自动帮你留住，随时能搜索、筛选、固定并安全粘贴。一切只存在你自己的 Mac 上，不上传任何剪贴板内容，用起来就像系统自带的功能一样自然。
 
-## ✨ 特性
+## 特性
 
-- 📋 **自动监听 + 去重** —— 复制即入库，呼出瞬间补抓，最新的永远在第一张
-- 🔍 **模糊搜索 + 相关度排序** —— 敲 `dbcon` 也能搜出 `database connection`，打错字也行
-- 🎴 **Paste 式卡片墙** —— 横向卡片按类型着色，来源 App 图标一眼可辨
-- 🏷️ **自动类型识别** —— URL / 代码 / JSON / 命令 / 邮件 自动归类
-- 🖼️ **不止文本** —— 图片、文件、富文本（RTF）都能存、能预览、能原样粘回
-- 🔒 **敏感内容过滤** —— token、密码、`.env` value、API key 命中后脱敏或不入库
-- 📌 **Pin 常用片段** —— 固定到独立分区，随取随用
-- ⚡ **回车粘贴** —— 选中回车写回剪贴板，并自动粘回原前台 App
-- 🛠️ **开发者转换** —— JSON 格式化 / 压缩、URL 清理（去 tracking 参数）
-- 🎨 **原生 macOS 26 体验** —— Apple Liquid Glass、语义色、SF Symbols，支持 Light / Dark、Reduce Motion
+- **自动记录与去重** —— 复制即保存，最新内容始终排在最前。
+- **Paste 式 Power Search** —— 搜索与筛选标签共用固定宽度输入框，支持建议和键盘操作。
+- **组合筛选** —— 内容类型、来源 App 和时间条件可以同时生效，也能逐个移除。
+- **卡片式历史墙** —— 横向卡片按类型着色，来源 App 图标一眼可辨。
+- **日常内容识别** —— 自动识别链接、图片、文件、邮箱、验证码、电话等内容。
+- **富剪贴板支持** —— 除文字外，图片、文件和富文本也能保存、预览并原样粘回。
+- **敏感内容保护** —— 密码、验证码、token、私钥等命中后隐藏或不保存。
+- **固定、命名与分组** —— 常用内容进入独立分区，支持自定义名称和单层分组。
+- **临时暂停记录** —— 可暂停 15 分钟、1 小时或直到手动恢复。
+- **可配置粘贴行为** —— 支持只复制、粘贴到上一应用或粘贴为纯文本。
+- **排除敏感 App** —— 默认不记录 Passwords、Keychain Access、1Password 和 Bitwarden。
+- **原生 macOS 26 体验** —— Liquid Glass、语义色、Hugeicons、浅色/深色和 Reduce Motion。
+- **流畅面板动效** —— Quick Panel 使用可打断的 Core Animation 合成层动画。
 
-## ⌨️ 快捷键
+## 快捷键
 
 | 操作 | 快捷键 |
-|---|---|
+| --- | --- |
 | 呼出 / 隐藏面板 | `⌥ Space`（可在设置中更改） |
-| 选择上一张 / 下一张 | `←` `→`（或 `↑` `↓`） |
-| 粘贴选中 | `Return` |
+| 选择上一张 / 下一张 | `←` `→` 或 `↑` `↓` |
+| 执行设置中的粘贴行为 | `Return` |
 | Quick Look 预览 | `Space`（搜索为空时） |
 | 仅复制后关闭 | `⌥ Return` |
+| 粘贴为纯文本 | `⌘ Return` |
 | 固定 / 取消固定 | `⌘P` |
 | 删除选中 | `⌘⌫` |
+| 切换 剪贴板 / 已固定 | `⌘1` / `⌘2` |
 | 清空搜索 / 关闭面板 | `Esc` |
 
-## 📦 安装
+## 安装
 
-### 直接用（DMG）
+### 下载 DMG
 
-1. 到 **[Releases 页面](https://github.com/Innate-Labs/bufferly/releases/latest)** 下载最新的 `Bufferly-x.y.z.dmg`
-2. 打开 DMG，把 Bufferly 拖到「应用程序」
-3. **首次启动右键「打开」**（未公证，需绕过一次 Gatekeeper）
+1. 从 [Releases](https://github.com/realruian/bufferly/releases/latest) 下载最新的 `PastePop-x.y.z.dmg`。
+2. 打开 DMG，把 PastePop 拖到「应用程序」。
+3. 本地构建尚未公证，首次启动请右键 PastePop 并选择「打开」。
 
-> 需要 **Apple Silicon + macOS 26 (Tahoe)**。
+PastePop 当前需要 Apple Silicon 与 macOS 26 Tahoe。
 
 ### 从源码构建
 
@@ -73,34 +73,36 @@
 git clone https://github.com/realruian/bufferly.git
 cd bufferly
 
-swift run Bufferly            # 开发运行
-bash scripts/build-app.sh     # 打包 .app → .build/Bufferly.app
-bash scripts/build-dmg.sh     # 打包 .dmg → .build/Bufferly.dmg
+swift run PastePop            # 开发运行
+bash scripts/build-app.sh     # 构建 .build/PastePop.app
+bash scripts/install-app.sh   # 覆盖安装到 /Applications 并启动
+bash scripts/build-dmg.sh     # 构建 .build/PastePop-x.y.z.dmg
 ```
 
-> **自动粘贴**依赖辅助功能权限：系统设置 → 隐私与安全性 → 辅助功能 → 允许 Bufferly。未授权也能用，内容已写回剪贴板，自己按 `⌘V` 即可。
+`install-app.sh` 会签名本地构建、注册 Launch Services、通知 Spotlight 导入应用并启动安装后的版本。
 
-## 🔒 隐私
+粘贴到上一应用需要在「系统设置 → 隐私与安全性 → 辅助功能」中允许 PastePop。没有权限时，PastePop 仍会把内容写回剪贴板，你可以手动按 `⌘V`。
 
-- 剪贴板历史**只存本地** SQLite：`~/Library/Application Support/Bufferly/`
-- **不做云同步、不上传任何内容**
-- 敏感内容默认过滤，可选脱敏占位或直接丢弃
-- 链接预览默认**关闭**（开启才联网获取标题/图标）
+## 隐私
 
-## 🛠️ 技术栈
+- 剪贴板历史只存于本地 SQLite：`~/Library/Application Support/PastePop/`。
+- 不提供云同步，也不上传剪贴板内容。
+- 保留时长、历史数量、排除 App 和敏感内容保护均可配置。
+- 默认排除常见密码与密钥管理 App。
+- 链接预览默认关闭，只有开启后才会联网。
 
-Swift · SwiftUI · AppKit · [GRDB](https://github.com/groue/GRDB.swift) / SQLite · Keychain
+## 技术栈
 
-## 🗺️ 路线图
+Swift 6.2 · SwiftUI · AppKit · Core Animation · [GRDB](https://github.com/groue/GRDB.swift) · SQLite · Keychain
 
-已完成核心剪贴板能力 + 图片/文件/富文本 + 模糊搜索。下一步是 AI 差异化楔子（MCP server、上下文打包、本地 LLM 转换）。详见 **[ROADMAP.md](ROADMAP.md)**。
+## 路线图与贡献
 
-## 🤝 贡献
+核心剪贴板能力、富内容、搜索筛选、固定分组、隐私控制和本地打包已经完成。后续计划见 [ROADMAP.md](ROADMAP.md)。
 
-欢迎 issue 与 PR。设计规范见 [`DESIGN.md`](DESIGN.md)，项目说明见 [`CLAUDE.md`](CLAUDE.md)。
+欢迎 issue 与 PR。修改产品行为或视觉前，请先阅读 [DESIGN.md](DESIGN.md) 和 [CLAUDE.md](CLAUDE.md)。
 
-## 📄 License
+## License
 
-[MIT](LICENSE) © [Innate Labs](https://github.com/Innate-Labs)
+[MIT](LICENSE) © [Ruian Tian](https://github.com/realruian)
 
-<div align="center"><sub>Built for developers who copy 50+ things a day.</sub></div>
+<div align="center"><sub>Built for everyone who copies things every day.</sub></div>
