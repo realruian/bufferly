@@ -7,6 +7,20 @@ final class ClipStore {
         try? databaseURL().path
     }
 
+    static func storedClipCount() -> Int {
+        guard
+            let databaseURL = try? databaseURL(),
+            FileManager.default.fileExists(atPath: databaseURL.path),
+            let queue = try? DatabaseQueue(path: databaseURL.path)
+        else {
+            return 0
+        }
+
+        return (try? queue.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM clips") ?? 0
+        }) ?? 0
+    }
+
     private let dbQueue: DatabaseQueue
     private var historyPolicy: HistoryPolicy
 

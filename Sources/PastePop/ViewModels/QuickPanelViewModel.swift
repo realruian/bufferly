@@ -91,7 +91,7 @@ final class QuickPanelViewModel: ObservableObject {
         )
     }
     private let pasteboard: NSPasteboard
-    private let clipStore: ClipStore?
+    private let historyService: ClipHistoryService
     private let clipboardWriter: ClipboardWriter
     private var clipsRevision = 0
     private var filteredCacheKey: FilterCacheKey?
@@ -108,15 +108,17 @@ final class QuickPanelViewModel: ObservableObject {
 
     init(
         pasteboard: NSPasteboard = .general,
-        clipStore: ClipStore? = try? ClipStore(
-            historyPolicy: HistoryPolicy(
-                maximumItemCount: AppSettings.shared.maxHistoryCount,
-                retentionDays: AppSettings.shared.historyRetention.days
+        historyService: ClipHistoryService = ClipHistoryService(
+            store: try? ClipStore(
+                historyPolicy: HistoryPolicy(
+                    maximumItemCount: AppSettings.shared.maxHistoryCount,
+                    retentionDays: AppSettings.shared.historyRetention.days
+                )
             )
         )
     ) {
         self.pasteboard = pasteboard
-        self.clipStore = clipStore
+        self.historyService = historyService
         clipboardWriter = ClipboardWriter(pasteboard: pasteboard)
 
         NotificationCenter.default.addObserver(
@@ -305,11 +307,11 @@ final class QuickPanelViewModel: ObservableObject {
     func startMonitoring() {
         guard !monitoringStarted else { return }
         monitoringStarted = true
-        loadPersistedClips()
-        applyHistoryPolicy()
+        clips = historyService.load()
+        historyService.apply(historyPolicy, to: &clips)
         repairOrphanedPinGroups()
         backfillSourceBundleIDs()
-        pruneOrphanedBlobs()
+        historyService.pruneOrphanedBlobs()
         clipboardMonitor.start()
         selectFirstIfNeeded()
     }
@@ -353,16 +355,8 @@ final class QuickPanelViewModel: ObservableObject {
             }
         }
 
-        guard !updates.isEmpty, let clipStore else {
-            return
-        }
-
         for (clipID, bundleID) in updates {
-            do {
-                try clipStore.updateSourceBundleID(clipID: clipID, bundleID: bundleID)
-            } catch {
-                AppLogger.storage.error("回填来源 App 失败：\(error.localizedDescription, privacy: .public)")
-            }
+            historyService.updateSourceBundleID(clipID: clipID, bundleID: bundleID)
         }
     }
 
@@ -399,94 +393,15 @@ final class QuickPanelViewModel: ObservableObject {
             return
         }
 
-        switch capture {
-        case .text(let text):
-            addText(text, source: context.source, bundleID: context.sourceBundleID)
-        case .richText(let rtf, let plain):
-            addRichText(rtf: rtf, plain: plain, source: context.source, bundleID: context.sourceBundleID)
-        case .image(let png, let pixelSize):
-            register(
-                ClipClassifier.makeImageClip(
-                    png: png,
-                    pixelSize: pixelSize,
-                    source: context.source,
-                    sourceBundleID: context.sourceBundleID
-                ),
-                blob: png
-            )
-        case .files(let urls):
-            guard let clip = ClipClassifier.makeFileClip(
-                urls: urls,
-                source: context.source,
-                sourceBundleID: context.sourceBundleID
-            ) else {
-                return
-            }
-            register(clip)
-        }
-    }
-
-    private func addText(_ text: String, source: String, bundleID: String?) {
-        var newClip: ClipItem
-        if AppSettings.shared.sensitiveFiltering, SensitiveContentFilter.isSensitive(text) {
-            // 命中敏感内容：要么丢弃，要么留一个不含明文的脱敏占位。
-            guard AppSettings.shared.storeSensitivePlaceholder else {
-                return
-            }
-            newClip = ClipClassifier.makeMaskedSecret(source: source, sourceBundleID: bundleID)
-        } else {
-            guard let clip = ClipClassifier.makeClip(from: text, source: source, sourceBundleID: bundleID) else {
-                return
-            }
-            newClip = clip
-        }
-
-        register(newClip)
-    }
-
-    private func addRichText(rtf: Data, plain: String, source: String, bundleID: String?) {
-        // 敏感判定按纯文本走；命中则按脱敏占位处理，丢弃 RTF。
-        if AppSettings.shared.sensitiveFiltering, SensitiveContentFilter.isSensitive(plain) {
-            guard AppSettings.shared.storeSensitivePlaceholder else {
-                return
-            }
-            register(ClipClassifier.makeMaskedSecret(source: source, sourceBundleID: bundleID))
+        guard historyService.register(
+            capture,
+            context: context,
+            sensitiveFiltering: AppSettings.shared.sensitiveFiltering,
+            storeSensitivePlaceholder: AppSettings.shared.storeSensitivePlaceholder,
+            clips: &clips,
+            policy: historyPolicy
+        ) else {
             return
-        }
-
-        guard let clip = ClipClassifier.makeRichTextClip(rtf: rtf, plain: plain, source: source, sourceBundleID: bundleID) else {
-            return
-        }
-        register(clip, blob: rtf)
-    }
-
-    /// 去重后插入到列表头并持久化，同时把选中移到它。`blob` 为附件型的二进制数据，
-    /// 仅在确为新条目时写盘（命中去重则复用已有附件，避免写孤儿文件）。
-    private func register(_ clip: ClipItem, blob: Data? = nil) {
-        var newClip = clip
-        var isDuplicate = false
-
-        if let existingIndex = clips.firstIndex(where: {
-            $0.content == newClip.content && $0.isSensitive == newClip.isSensitive
-        }) {
-            var existing = clips.remove(at: existingIndex)
-            existing.updatedAt = Date()
-            newClip = existing
-            isDuplicate = true
-        }
-
-        if !isDuplicate, let blob, let filename = newClip.attachmentFilename {
-            guard ClipBlobStore.write(blob, filename: filename) else {
-                return
-            }
-        }
-
-        clips.insert(newClip, at: 0)
-
-        let locallyPruned = pruneInMemoryForHistoryPolicy()
-        if let persistedPruned = persist(newClip) {
-            locallyPruned.forEach { persistDelete(clipID: $0.id) }
-            deleteAttachmentBlobs(for: locallyPruned + persistedPruned)
         }
 
         selectedID = filteredClips.first?.id
@@ -582,7 +497,7 @@ final class QuickPanelViewModel: ObservableObject {
         } else {
             clips[index].pinGroupID = nil
         }
-        persistPinState(for: clips[index])
+        historyService.updatePin(for: clips[index])
     }
 
     func renamePinnedClip(clipID: ClipItem.ID, to rawName: String) {
@@ -595,7 +510,7 @@ final class QuickPanelViewModel: ObservableObject {
 
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         clips[index].customName = trimmed.isEmpty ? nil : String(trimmed.prefix(80))
-        persistCustomName(for: clips[index])
+        historyService.updateCustomName(for: clips[index])
     }
 
     func movePinnedClip(clipID: ClipItem.ID, to groupID: UUID?) {
@@ -607,7 +522,7 @@ final class QuickPanelViewModel: ObservableObject {
         }
 
         clips[index].pinGroupID = groupID
-        persistPinState(for: clips[index])
+        historyService.updatePin(for: clips[index])
     }
 
     @discardableResult
@@ -627,11 +542,7 @@ final class QuickPanelViewModel: ObservableObject {
             clips[index].pinGroupID = nil
         }
 
-        do {
-            try clipStore?.clearPinGroup(groupID: id)
-        } catch {
-            AppLogger.storage.error("清理固定分组失败：\(error.localizedDescription, privacy: .public)")
-        }
+        historyService.clearPinGroup(id: id)
 
         AppSettings.shared.deletePinGroup(id: id)
         if pinGroupSelection == .group(id) {
@@ -662,11 +573,7 @@ final class QuickPanelViewModel: ObservableObject {
         let visibleBefore = filteredClips
         let removedVisibleIndex = visibleBefore.firstIndex(where: { $0.id == clipID })
 
-        if let filename = clips[index].attachmentFilename {
-            ClipBlobStore.delete(filename: filename)
-        }
-        clips.remove(at: index)
-        persistDelete(clipID: clipID)
+        historyService.delete(clips[index], from: &clips)
 
         let visibleAfter = filteredClips
         if let removedVisibleIndex {
@@ -678,27 +585,9 @@ final class QuickPanelViewModel: ObservableObject {
     }
 
     func clearHistory(keepPinned: Bool) {
-        // 被清掉的条目若带附件，先删 blob。
-        let removed = keepPinned ? clips.filter { !$0.isPinned } : clips
-        removed.forEach { clip in
-            if let filename = clip.attachmentFilename {
-                ClipBlobStore.delete(filename: filename)
-            }
-        }
-
-        clips = keepPinned ? clips.filter(\.isPinned) : []
+        historyService.clear(keepPinned: keepPinned, clips: &clips)
         selectedID = filteredClips.first?.id
         isFocusVisible = false
-
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            try clipStore.clear(keepPinned: keepPinned)
-        } catch {
-            AppLogger.storage.error("清空历史失败：\(error.localizedDescription, privacy: .public)")
-        }
     }
 
     @discardableResult
@@ -717,23 +606,10 @@ final class QuickPanelViewModel: ObservableObject {
         isFocusVisible = false
         scrollRequest = ScrollRequest(kind: .resetToFront)
     }
-
     private func selectFirstIfNeeded() {
         if selectedID == nil || selectedClip == nil {
             selectedID = filteredClips.first?.id
             scrollRequest = ScrollRequest(kind: .resetToFront)
-        }
-    }
-
-    private func loadPersistedClips() {
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            clips = try clipStore.fetchClips()
-        } catch {
-            AppLogger.storage.error("加载历史失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -750,112 +626,15 @@ final class QuickPanelViewModel: ObservableObject {
             }
 
             clips[index].pinGroupID = nil
-            persistPinState(for: clips[index])
+            historyService.updatePin(for: clips[index])
         }
     }
 
     private func applyHistoryPolicy() {
-        guard let clipStore else {
-            return
-        }
-
-        let locallyPruned = pruneInMemoryForHistoryPolicy()
-
-        do {
-            let persistedPruned = try clipStore.updateHistoryPolicy(historyPolicy)
-            locallyPruned.forEach { persistDelete(clipID: $0.id) }
-            deleteAttachmentBlobs(for: locallyPruned + persistedPruned)
-        } catch {
-            AppLogger.storage.error("应用历史策略失败：\(error.localizedDescription, privacy: .public)")
-        }
+        historyService.apply(historyPolicy, to: &clips)
 
         selectedID = filteredClips.first?.id
         scrollRequest = ScrollRequest(kind: .resetToFront)
-    }
-
-    private func pruneOrphanedBlobs() {
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            let activeFilenames = try clipStore.fetchAttachmentFilenames()
-            ClipBlobStore.deleteOrphans(keeping: activeFilenames)
-        } catch {
-            AppLogger.storage.error("清理孤立附件失败：\(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private func pruneInMemoryForHistoryPolicy() -> [ClipItem] {
-        let removed = historyPolicy.itemsToRemove(
-            from: clips,
-            attachmentSize: { ClipBlobStore.size(filename: $0) }
-        )
-        let removableIDs = Set(removed.map(\.id))
-        clips.removeAll { removableIDs.contains($0.id) }
-        return removed
-    }
-
-    private func deleteAttachmentBlobs(for clips: [ClipItem]) {
-        for clip in clips {
-            if let filename = clip.attachmentFilename {
-                ClipBlobStore.delete(filename: filename)
-            }
-        }
-    }
-
-    @discardableResult
-    private func persist(_ clip: ClipItem) -> [ClipItem]? {
-        guard let clipStore else {
-            return []
-        }
-
-        do {
-            return try clipStore.upsert(clip)
-        } catch {
-            AppLogger.storage.error("保存历史失败：\(error.localizedDescription, privacy: .public)")
-            return nil
-        }
-    }
-
-    private func persistPinState(for clip: ClipItem) {
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            try clipStore.updatePin(
-                clipID: clip.id,
-                isPinned: clip.isPinned,
-                pinGroupID: clip.pinGroupID
-            )
-        } catch {
-            AppLogger.storage.error("保存固定状态失败：\(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private func persistCustomName(for clip: ClipItem) {
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            try clipStore.updateCustomName(clipID: clip.id, customName: clip.customName)
-        } catch {
-            AppLogger.storage.error("保存自定义名称失败：\(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private func persistDelete(clipID: ClipItem.ID) {
-        guard let clipStore else {
-            return
-        }
-
-        do {
-            try clipStore.delete(clipID: clipID)
-        } catch {
-            AppLogger.storage.error("删除历史失败：\(error.localizedDescription, privacy: .public)")
-        }
     }
 
     private func moveSelection(offset: Int) {

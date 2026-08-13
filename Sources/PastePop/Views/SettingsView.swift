@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var selectedSection: SettingsSection = .general
     @State private var showExcludedApps = false
     @State private var showClearHistoryConfirmation = false
+    @State private var storageSnapshot = ClipStorageSnapshot.current()
 
     init(
         settings: AppSettings,
@@ -42,9 +43,14 @@ struct SettingsView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             eventPostingPermission.refresh()
+            refreshStorageSnapshot()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             eventPostingPermission.refresh()
+            refreshStorageSnapshot()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .historyStorageDidChange)) { _ in
+            refreshStorageSnapshot()
         }
         .sheet(isPresented: $showExcludedApps) {
             excludedAppsSheet
@@ -250,7 +256,7 @@ struct SettingsView: View {
             }
 
             settingsGroup("数据") {
-                settingsRow("存储位置", caption: "剪贴板历史仅保存在本机") {
+                settingsRow("存储位置", caption: storageSnapshot.summary) {
                     Button("在 Finder 中显示") {
                         revealDatabaseInFinder()
                     }
@@ -498,6 +504,10 @@ struct SettingsView: View {
     private func revealDatabaseInFinder() {
         guard let path = ClipStore.databasePath else { return }
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+    }
+
+    private func refreshStorageSnapshot() {
+        storageSnapshot = ClipStorageSnapshot.current()
     }
 }
 

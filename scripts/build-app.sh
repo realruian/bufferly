@@ -2,13 +2,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="$ROOT_DIR/.build/arm64-apple-macosx/release"
+CACHE_ROOT="$(getconf DARWIN_USER_CACHE_DIR)"
+SCRATCH_DIR="${PASTEPOP_SCRATCH_DIR:-${CACHE_ROOT%/}/PastePop/SwiftPM}"
+BUILD_DIR="$SCRATCH_DIR/arm64-apple-macosx/release"
 APP_DIR="$ROOT_DIR/.build/PastePop.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
-swift build -c release
+swift build -c release --scratch-path "$SCRATCH_DIR"
 
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"

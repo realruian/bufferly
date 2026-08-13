@@ -5,7 +5,7 @@
 ## 项目状态
 
 - M2 进行中：Swift Package macOS app 已接入真实剪贴板监听、GRDB/SQLite 本地持久化、去重、组合筛选、搜索、pin、固定内容命名与单层分组、回车写回剪贴板、全局快捷键呼出 / 隐藏、菜单栏入口、菜单栏 / 程序坞图标，以及回车后关闭面板并可选贴回原前台 App。
-- 设置页已支持粘贴行为、呼出快捷键预设、Dock 显示、开机自启、历史保留时长、最大历史数量、敏感内容保护、链接预览、排除 App、数据位置和清空历史。
+- 设置页已支持粘贴行为、呼出快捷键预设、Dock 显示、开机自启、历史保留时长、最大历史数量、敏感内容保护、链接预览、排除 App、数据位置、存储占用和清空历史。
 - 历史策略统一由 `HistoryPolicy` 管理；附件总量超过 200 MB 时从最旧的未固定内容开始淘汰，固定内容不自动删除。
 - 菜单栏支持暂停记录 15 分钟、1 小时或直到手动恢复；暂停状态跨启动保留，到期自动恢复。
 - 复制后粘贴到上一应用依赖 macOS 辅助功能权限；权限不可用时至少保证内容已写回剪贴板。敏感内容过滤默认开启；链接预览默认关闭，开启后才联网。
@@ -51,7 +51,7 @@
 
 - 开发：`swift run PastePop`
 - 构建：`swift build`
-- 打包本地 app：`bash scripts/build-app.sh`，产物在 `.build/PastePop.app`（自动 Developer ID / ad-hoc 签名并校验）
+- 打包本地 app：`bash scripts/build-app.sh`，产物在 `.build/PastePop.app`（SwiftPM Release 缓存位于用户缓存目录，避免仓库迁移污染；自动 Developer ID / ad-hoc 签名并校验）
 - 覆盖安装本机 app：`bash scripts/install-app.sh`（构建、退出旧进程、替换 `/Applications/PastePop.app`、验签并启动）
 - 打包 DMG：`bash scripts/build-dmg.sh`，产物在 `.build/PastePop.dmg`（无 Developer ID 时 ad-hoc 签名，本机可运行；零警告分发需 Developer ID + 公证）
 - 类型检查：`swift build`
@@ -61,7 +61,7 @@
 
 - 设计规范见 `DESIGN.md`。
 - 剪贴板监听、存储、安全过滤、类型识别、快捷键、UI 面板应保持边界清晰。
-- `QuickPanelViewModel` 只协调面板状态与用户动作；格式化写回由 `ClipboardWriter` 负责，历史淘汰规则由 `HistoryPolicy` 负责。
+- `QuickPanelViewModel` 只协调面板状态与用户动作；捕获、去重、持久化和附件生命周期由 `ClipHistoryService` 负责，格式化写回由 `ClipboardWriter` 负责，历史淘汰规则由 `HistoryPolicy` 负责。
 - 面板预览、首次引导和状态提示放在 `QuickPanelOverlays.swift`，不要重新堆回主面板视图。
 - 默认本地存储，涉及敏感内容时优先选择不入库。
 - UI 尽可能接近 Apple 原生体验，优先使用 SwiftUI / AppKit 系统控件、语义色、SF Symbols 和平台交互习惯。

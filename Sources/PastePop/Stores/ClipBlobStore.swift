@@ -48,6 +48,24 @@ enum ClipBlobStore {
         return Int64(fileSize)
     }
 
+    static func totalSize() -> Int64 {
+        guard
+            let directory = try? blobsDirectory(),
+            let urls = try? FileManager.default.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
+            return 0
+        }
+
+        return urls.reduce(into: Int64(0)) { total, url in
+            let fileSize = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+            total += Int64(fileSize ?? 0)
+        }
+    }
+
     static func delete(filename: String) {
         guard let fileURL = url(for: filename) else {
             return

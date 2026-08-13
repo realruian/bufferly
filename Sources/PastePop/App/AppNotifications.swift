@@ -12,6 +12,7 @@ extension Notification.Name {
     static let dockVisibilityDidChange = Notification.Name("dockVisibilityDidChange")
     static let clearHistoryRequested = Notification.Name("clearHistoryRequested")
     static let historyPolicyDidChange = Notification.Name("historyPolicyDidChange")
+    static let historyStorageDidChange = Notification.Name("historyStorageDidChange")
 }
 
 enum QuickPanelStatusKind: String {
