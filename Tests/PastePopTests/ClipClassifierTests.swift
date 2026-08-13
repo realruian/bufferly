@@ -54,7 +54,7 @@ struct ClipClassifierTests {
     @Test("邮箱与链接识别不受影响")
     func keepsEmailAndURL() {
         #expect(kind(of: "foo@example.com") == .email)
-        #expect(kind(of: "https://github.com/Innate-Labs/bufferly") == .url)
+        #expect(kind(of: "https://github.com/realruian/pastepop") == .url)
     }
 
     // MARK: - 开发者类型弱化为高级类型

@@ -7,7 +7,7 @@ import Testing
 private enum SensitiveSamples {
     /// jwt.io 风格的假 JWT（三段 base64url）。
     static let jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-        + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkJ1ZmZlcmx5In0."
+        + "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlBhc3RlUG9wIn0."
         + "Ab3dEf6hIj9kLm2nOp5qRs8tUv1wXy4z"
 
     /// 已知服务的单 token。
@@ -104,7 +104,7 @@ private enum SensitiveSamples {
 private enum BenignSamples {
     static let all: [String] = [
         // 普通 URL
-        "https://github.com/Innate-Labs/bufferly/releases/latest",
+        "https://github.com/realruian/pastepop/releases/latest",
         "https://developer.apple.com/design/human-interface-guidelines",
         "https://example.com/watch?v=dQw4w9WgXcQ",
         "https://api.example.com/v1/items?page=2&limit=50",
