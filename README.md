@@ -1,82 +1,110 @@
 <div align="center">
 
-<img src="docs/icon.png" width="120" alt="Bufferly" />
+<img src="docs/icon.png" width="120" alt="PastePop" />
 
-# Bufferly
+# PastePop
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**A local-first clipboard workspace for developers and AI-heavy workflows**
+**Everything you copy, right at hand.**
+
+<sub>Native on macOS · Fast and fluid · Private by design</sub>
 
 ![Platform](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Liquid Glass](https://img.shields.io/badge/UI-Liquid%20Glass-7AA7FF)
-[![License](https://img.shields.io/github/license/Innate-Labs/bufferly?color=blue)](LICENSE)
+[![License](https://img.shields.io/github/license/realruian/pastepop?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/realruian/pastepop?style=social)](https://github.com/realruian/pastepop)
+
+<br/>
+
+[![Download DMG](https://img.shields.io/badge/Download-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/pastepop/releases/latest)
+
+<sub>Get the latest build from <a href="https://github.com/realruian/pastepop/releases/latest">Releases</a></sub>
 
 </div>
 
-Bufferly automatically organizes copied code, commands, links, JSON, prompts, images, files, and temporary text into a searchable and reusable local workspace. It is designed for developer and AI workflows rather than as a generic clipboard replacement, and clipboard history stays on your Mac by default.
+---
+
+PastePop turns your clipboard into a visual, searchable history. Open it with one shortcut, find what you copied, and paste it back in seconds.
 
 ## Features
 
-- **Automatic capture and deduplication** — new clipboard items appear first without filling the history with duplicates.
-- **Fuzzy search and relevance ranking** — find `database connection` with a short query such as `dbcon`.
-- **Type-aware cards** — distinguish URLs, code, JSON, commands, email, images, files, and rich text at a glance.
-- **Native paste-back** — select an item and press Return to restore it to the clipboard and paste it into the previous app.
-- **Pinned snippets** — keep frequently reused content in a dedicated section.
-- **Developer transforms** — format or minify JSON and remove tracking parameters from URLs.
-- **Sensitive-content filtering** — redact or discard detected tokens, passwords, `.env` values, and API keys.
-- **Native macOS experience** — Liquid Glass, semantic colors, SF Symbols, light/dark appearance, and Reduce Motion support.
+- **Automatic capture and deduplication** — copied items are saved locally, with the newest item first.
+- **Paste-style Power Search** — search and filter tokens share one stable input with suggestions and keyboard control.
+- **Combined filters** — narrow results by content type, source app, and time at the same time.
+- **Visual card history** — scan a horizontal wall of type-colored cards with source-app icons.
+- **Everyday content recognition** — links, images, files, email addresses, verification codes, phone numbers, and more.
+- **Rich clipboard support** — preserve and preview images, files, and rich text in addition to plain text.
+- **Sensitive-content protection** — detected passwords, verification codes, tokens, and private keys are hidden or excluded.
+- **Pins, names, and groups** — keep reusable content in a dedicated area with custom names and one-level groups.
+- **Pause recording** — stop capture for 15 minutes, one hour, or until manually resumed.
+- **Configurable paste behavior** — copy only, paste into the previous app, or paste as plain text.
+- **Excluded apps** — Passwords, Keychain Access, 1Password, and Bitwarden are excluded by default.
+- **Native macOS 26 experience** — Liquid Glass, semantic colors, Hugeicons, Light/Dark appearance, and Reduce Motion.
+- **Smooth panel motion** — Quick Panel entrance and exit use interruptible Core Animation compositing.
 
 ## Keyboard shortcuts
 
 | Action | Shortcut |
 | --- | --- |
-| Show or hide the panel | `⌥ Space` by default |
-| Move between cards | Arrow keys |
-| Paste the selected item | `Return` |
+| Show or hide Quick Panel | `⌥ Space` by default |
+| Move between cards | `←` `→` or `↑` `↓` |
+| Run the configured paste action | `Return` |
 | Quick Look preview | `Space` when search is empty |
-| Copy and close without pasting | `⌥ Return` |
+| Copy and close | `⌥ Return` |
+| Paste as plain text | `⌘ Return` |
 | Pin or unpin | `⌘P` |
 | Delete the selected item | `⌘⌫` |
+| Switch Clipboard / Pinned | `⌘1` / `⌘2` |
 | Clear search or close | `Esc` |
 
 ## Installation
 
 ### Download the app
 
-Download the latest DMG from the [Bufferly releases page](https://github.com/Innate-Labs/bufferly/releases/latest), open it, and drag Bufferly into Applications. The current build requires Apple Silicon and macOS 26 Tahoe.
+1. Download the latest `PastePop-x.y.z.dmg` from [Releases](https://github.com/realruian/pastepop/releases/latest).
+2. Open the DMG and drag PastePop into Applications.
+3. On first launch, right-click PastePop and choose **Open** because local builds are not notarized.
 
-Because the app is not notarized, use right-click → **Open** the first time.
+PastePop currently requires Apple Silicon and macOS 26 Tahoe.
 
 ### Build from source
 
 ```bash
-git clone https://github.com/realruian/bufferly.git
-cd bufferly
+git clone https://github.com/realruian/pastepop.git
+cd pastepop
 
-swift run Bufferly
-bash scripts/build-app.sh
-bash scripts/build-dmg.sh
+swift run PastePop            # Run a development build
+bash scripts/build-app.sh     # Build .build/PastePop.app
+bash scripts/install-app.sh   # Install to /Applications and launch
+bash scripts/build-dmg.sh     # Build .build/PastePop-x.y.z.dmg
 ```
 
-Automatic paste-back requires Accessibility permission under System Settings → Privacy & Security → Accessibility. Without it, Bufferly can still restore the selected item to the clipboard for a manual `⌘V`.
+`install-app.sh` signs the local build, registers it with Launch Services, asks Spotlight to import it, and launches the installed app.
+
+Pasting into the previous app requires Accessibility permission under **System Settings → Privacy & Security → Accessibility**. Without it, PastePop still restores the selected item to the clipboard for a manual `⌘V`.
 
 ## Privacy
 
-- Clipboard history is stored locally in SQLite under `~/Library/Application Support/Bufferly/`.
-- Bufferly does not sync or upload clipboard contents.
-- Sensitive content can be redacted or excluded from storage.
+- Clipboard history is stored locally in SQLite under `~/Library/Application Support/PastePop/`.
+- PastePop does not provide cloud sync or upload clipboard contents.
+- Retention time, history limits, excluded apps, and sensitive-content protection are configurable.
+- Sensitive apps are excluded by default.
 - Link previews are disabled by default and access the network only when enabled.
 
 ## Technology
 
-Swift 6.2 · SwiftUI · AppKit · [GRDB](https://github.com/groue/GRDB.swift) · SQLite · Keychain
+Swift 6.2 · SwiftUI · AppKit · Core Animation · [GRDB](https://github.com/groue/GRDB.swift) · SQLite · Keychain
 
 ## Roadmap and contributing
 
-See [ROADMAP.md](ROADMAP.md) for planned AI workflow features. Contributions are welcome; read [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md) before changing product behavior or visuals.
+The core clipboard experience, rich content, search, filters, pins, groups, privacy controls, and local packaging are implemented. See [ROADMAP.md](ROADMAP.md) for what comes next.
+
+Contributions are welcome. Read [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md) before changing product behavior or visuals.
 
 ## License
 
-[MIT](LICENSE) © [Innate Labs](https://github.com/Innate-Labs)
+[MIT](LICENSE) © [Ruian Tian](https://github.com/realruian)
+
+<div align="center"><sub>Built for everyone who copies things every day.</sub></div>
