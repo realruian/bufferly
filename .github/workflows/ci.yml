@@ -15,7 +15,7 @@ jobs:
     name: 构建 · SwiftPM (macOS)
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 工具链版本
         run: |
           swift --version
