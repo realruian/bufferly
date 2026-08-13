@@ -15,7 +15,7 @@ struct QuickPanelView: View {
     @State private var scrollWheelMonitor: Any?
     @State private var showPreview = false
     @State private var showOnboarding = false
-    @State private var statusBanner: StatusBanner?
+    @State private var statusBanner: QuickPanelStatusMessage?
     @State private var statusDismissTask: Task<Void, Never>?
     @State private var editorTarget: EditorTarget?
     @State private var editorText = ""
@@ -49,20 +49,27 @@ struct QuickPanelView: View {
         .panelBackground(cornerRadius: 34)
         .overlay(alignment: .bottom) {
             if let statusBanner, !showPreview, !showOnboarding {
-                statusBannerView(statusBanner)
+                QuickPanelStatusBannerView(banner: statusBanner)
                     .padding(.bottom, 18)
                     .transition(statusTransition)
             }
         }
         .overlay {
-            if showPreview, viewModel.selectedClip != nil {
-                previewOverlay
+            if showPreview, let clip = viewModel.selectedClip {
+                QuickPanelPreviewView(
+                    clip: clip,
+                    returnActionTitle: returnActionTitle,
+                    onDismiss: { showPreview = false }
+                )
                     .transition(.identity)
             }
         }
         .overlay {
             if showOnboarding {
-                onboardingOverlay
+                QuickPanelOnboardingView(
+                    hotKeyPreset: appSettings.hotKeyPreset,
+                    onDismiss: dismissOnboarding
+                )
                     .transition(.opacity)
             }
         }
@@ -476,46 +483,6 @@ struct QuickPanelView: View {
         )
     }
 
-    private func statusBannerView(_ banner: StatusBanner) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
-
-        return HStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(banner.kind.tint.opacity(0.14))
-                    .frame(width: 24, height: 24)
-
-                HugeIconView(name: banner.kind.hugeIconName, fallbackSystemName: banner.kind.symbolName)
-                    .frame(width: 13, height: 13)
-                    .foregroundStyle(banner.kind.tint)
-            }
-
-            Text(banner.message)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.leading, 9)
-        .padding(.trailing, 13)
-        // 宽度随内容自适应，长消息（授权类警告）最多两行，不再被固定宽度截断。
-        .frame(minHeight: 42)
-        .frame(maxWidth: 420)
-        .background {
-            if reduceTransparency {
-                shape
-                    .fill(Color(nsColor: .windowBackgroundColor))
-            } else {
-                shape
-                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.16))
-                    .glassEffect(.regular, in: shape)
-            }
-        }
-        .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 3)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(banner.message)
-    }
-
     private func handleStatusNotification(_ notification: Notification) {
         guard let message = notification.userInfo?[QuickPanelStatusPayload.messageKey] as? String else {
             return
@@ -529,7 +496,7 @@ struct QuickPanelView: View {
     private func showStatus(_ message: String, kind: QuickPanelStatusKind) {
         statusDismissTask?.cancel()
         withAnimation(reduceMotion ? Motion.reducedFade : Motion.toastIn) {
-            statusBanner = StatusBanner(message: message, kind: kind)
+            statusBanner = QuickPanelStatusMessage(message: message, kind: kind)
         }
         statusDismissTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_600_000_000)
@@ -537,172 +504,6 @@ struct QuickPanelView: View {
             withAnimation(reduceMotion ? Motion.reducedFade : Motion.toastOut) {
                 statusBanner = nil
             }
-        }
-    }
-
-    /// 首次使用引导：一次性，看过即不再出现。
-    private var onboardingOverlay: some View {
-        ZStack {
-            Rectangle()
-                .fill(.black.opacity(0.28))
-                .ignoresSafeArea()
-                .onTapGesture { dismissOnboarding() }
-
-            VStack(spacing: 14) {
-                HugeIconView(name: "ai-content-generator-01", fallbackSystemName: "doc.on.clipboard.fill")
-                    .frame(width: 38, height: 38)
-                    .foregroundStyle(.tint)
-
-                Text("欢迎使用 PastePop")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    onboardingLine(appSettings.hotKeyPreset.symbols, "在任意 App 呼出 / 隐藏这个面板")
-                    onboardingLine("← →", "左右浏览 · 按空格放大预览")
-                    onboardingLine("回车", "把选中内容复制到剪贴板")
-                    onboardingLine("⌘P / ⌘⌫", "固定常用内容 / 删除选中")
-                }
-                .font(.callout)
-
-                Text("呼出快捷键是 \(appSettings.hotKeyPreset.displayName)。想按回车后自动粘贴回刚才的 App，可以在设置里开启。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                Button("开始使用") { dismissOnboarding() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-            }
-            .padding(28)
-            .frame(maxWidth: 380)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .padding(24)
-        }
-    }
-
-    private func onboardingLine(_ key: String, _ desc: String) -> some View {
-        HStack(spacing: 10) {
-            Text(key)
-                .font(.callout.monospaced())
-                .fontWeight(.medium)
-                .frame(width: 90, alignment: .leading)
-            Text(desc)
-                .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-        }
-    }
-
-    /// 空格 Quick Look：把选中条目的完整内容 / 大图弹出来看，贴前确认。
-    @ViewBuilder
-    private var previewOverlay: some View {
-        if let clip = viewModel.selectedClip {
-            ZStack {
-                Rectangle()
-                    .fill(.black.opacity(0.24))
-                    .ignoresSafeArea()
-                    .onTapGesture { showPreview = false }
-
-                previewPanel(for: clip)
-                    .padding(20)
-            }
-        }
-    }
-
-    private func previewPanel(for clip: ClipItem) -> some View {
-        let shellShape = RoundedRectangle(cornerRadius: 22, style: .continuous)
-
-        return VStack(alignment: .leading, spacing: 12) {
-            previewHeader(for: clip)
-            previewContentSurface(for: clip)
-        }
-        .padding(14)
-        .frame(maxWidth: 560, maxHeight: 306)
-        .background {
-            if reduceTransparency {
-                shellShape
-                    .fill(Color(nsColor: .windowBackgroundColor))
-            } else {
-                shellShape
-                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.14))
-                    .glassEffect(.regular, in: shellShape)
-            }
-        }
-        .shadow(color: .black.opacity(0.16), radius: 16, x: 0, y: 6)
-    }
-
-    private func previewHeader(for clip: ClipItem) -> some View {
-        HStack(spacing: 8) {
-            HugeIconView(name: clip.kind.hugeIconName, fallbackSystemName: clip.kind.symbolName)
-                .foregroundStyle(clip.kind.accent)
-                .frame(width: 15, height: 15)
-
-            Text(clip.kind.displayName)
-                .fontWeight(.semibold)
-
-            if let customName = clip.customName {
-                Text(customName)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-
-            Text(clip.source)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Text("空格 / Esc 关闭 · Return \(returnActionTitle)")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        }
-        .font(.callout)
-        .padding(.horizontal, 4)
-    }
-
-    private func previewContentSurface(for clip: ClipItem) -> some View {
-        let contentShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
-
-        return previewBody(for: clip)
-            .padding(12)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background {
-                contentShape
-                    .fill(Color(nsColor: .textBackgroundColor).opacity(0.94))
-            }
-    }
-
-    @ViewBuilder
-    private func previewBody(for clip: ClipItem) -> some View {
-        let mono = clip.kind == .code || clip.kind == .json || clip.kind == .command
-
-        if clip.isSensitive {
-            VStack(spacing: 6) {
-                Text("敏感内容已隐藏")
-                    .foregroundStyle(.secondary)
-
-                Text("为保护隐私没有保存原文，需要时请回到原来的 App 重新复制。")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if
-            clip.kind == .image,
-            let filename = clip.attachmentFilename,
-            let data = ClipBlobStore.read(filename: filename),
-            let image = NSImage(data: data)
-        {
-            Image(nsImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            ScrollView {
-                Text(clip.content)
-                    .font(mono ? .system(.callout, design: .monospaced) : .callout)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxHeight: .infinity)
         }
     }
 
@@ -963,12 +764,6 @@ private enum EditorTarget {
     case renameGroup(PinGroup)
 }
 
-private struct StatusBanner: Equatable {
-    let id = UUID()
-    let message: String
-    let kind: QuickPanelStatusKind
-}
-
 /// 卡片墙滚动几何：内容偏移 + 视口宽 + 内容总宽。
 private struct WallGeometry: Equatable {
     var offsetX: CGFloat = 0
@@ -984,41 +779,6 @@ private struct StatusTransitionModifier: ViewModifier {
         content
             .opacity(opacity)
             .offset(y: offsetY)
-    }
-}
-
-private extension QuickPanelStatusKind {
-    var hugeIconName: String {
-        switch self {
-        case .success:
-            return "checkmark-circle-02"
-        case .warning:
-            return "alert-02"
-        case .info:
-            return "information-circle"
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .success:
-            return "checkmark.circle.fill"
-        case .warning:
-            return "exclamationmark.triangle.fill"
-        case .info:
-            return "info.circle.fill"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .success:
-            return .green
-        case .warning:
-            return .orange
-        case .info:
-            return .blue
-        }
     }
 }
 

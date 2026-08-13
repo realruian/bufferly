@@ -23,7 +23,7 @@ enum LoginItem {
             }
             return true
         } catch {
-            print("Failed to update login item: \(error)")
+            AppLogger.lifecycle.error("更新开机自启失败：\(error.localizedDescription, privacy: .public)")
             return false
         }
     }

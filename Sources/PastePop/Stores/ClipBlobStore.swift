@@ -25,7 +25,7 @@ enum ClipBlobStore {
             try data.write(to: fileURL, options: .atomic)
             return true
         } catch {
-            print("Failed to write blob \(filename): \(error)")
+            AppLogger.storage.error("写入附件失败：\(error.localizedDescription, privacy: .public)")
             return false
         }
     }
@@ -35,6 +35,17 @@ enum ClipBlobStore {
             return nil
         }
         return try? Data(contentsOf: fileURL)
+    }
+
+    static func size(filename: String) -> Int64 {
+        guard
+            let fileURL = url(for: filename),
+            let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+            let fileSize = values.fileSize
+        else {
+            return 0
+        }
+        return Int64(fileSize)
     }
 
     static func delete(filename: String) {

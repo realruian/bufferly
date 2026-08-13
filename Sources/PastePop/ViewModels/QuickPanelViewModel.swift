@@ -22,10 +22,7 @@ final class QuickPanelViewModel: ObservableObject {
         }
     }
 
-    enum PasteMode {
-        case original
-        case plainText
-    }
+    typealias PasteMode = ClipboardWriter.Mode
 
     /// 卡片墙滚动请求。`token` 保证相同目标的连续请求也能触发 onChange。
     struct ScrollRequest: Equatable {
@@ -87,11 +84,15 @@ final class QuickPanelViewModel: ObservableObject {
         }
     }
 
-    private var maxHistoryCount: Int {
-        AppSettings.shared.maxHistoryCount
+    private var historyPolicy: HistoryPolicy {
+        HistoryPolicy(
+            maximumItemCount: AppSettings.shared.maxHistoryCount,
+            retentionDays: AppSettings.shared.historyRetention.days
+        )
     }
     private let pasteboard: NSPasteboard
     private let clipStore: ClipStore?
+    private let clipboardWriter: ClipboardWriter
     private var clipsRevision = 0
     private var filteredCacheKey: FilterCacheKey?
     private var filteredCache: [ClipItem] = []
@@ -108,12 +109,15 @@ final class QuickPanelViewModel: ObservableObject {
     init(
         pasteboard: NSPasteboard = .general,
         clipStore: ClipStore? = try? ClipStore(
-            maxHistoryCount: AppSettings.shared.maxHistoryCount,
-            historyRetentionDays: AppSettings.shared.historyRetention.days
+            historyPolicy: HistoryPolicy(
+                maximumItemCount: AppSettings.shared.maxHistoryCount,
+                retentionDays: AppSettings.shared.historyRetention.days
+            )
         )
     ) {
         self.pasteboard = pasteboard
         self.clipStore = clipStore
+        clipboardWriter = ClipboardWriter(pasteboard: pasteboard)
 
         NotificationCenter.default.addObserver(
             forName: .clearHistoryRequested,
@@ -302,6 +306,7 @@ final class QuickPanelViewModel: ObservableObject {
         guard !monitoringStarted else { return }
         monitoringStarted = true
         loadPersistedClips()
+        applyHistoryPolicy()
         repairOrphanedPinGroups()
         backfillSourceBundleIDs()
         pruneOrphanedBlobs()
@@ -356,7 +361,7 @@ final class QuickPanelViewModel: ObservableObject {
             do {
                 try clipStore.updateSourceBundleID(clipID: clipID, bundleID: bundleID)
             } catch {
-                print("Failed to backfill sourceBundleID: \(error)")
+                AppLogger.storage.error("回填来源 App 失败：\(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -480,6 +485,7 @@ final class QuickPanelViewModel: ObservableObject {
 
         let locallyPruned = pruneInMemoryForHistoryPolicy()
         if let persistedPruned = persist(newClip) {
+            locallyPruned.forEach { persistDelete(clipID: $0.id) }
             deleteAttachmentBlobs(for: locallyPruned + persistedPruned)
         }
 
@@ -624,7 +630,7 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             try clipStore?.clearPinGroup(groupID: id)
         } catch {
-            print("Failed to clear pin group: \(error)")
+            AppLogger.storage.error("清理固定分组失败：\(error.localizedDescription, privacy: .public)")
         }
 
         AppSettings.shared.deletePinGroup(id: id)
@@ -691,64 +697,13 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             try clipStore.clear(keepPinned: keepPinned)
         } catch {
-            print("Failed to clear history: \(error)")
+            AppLogger.storage.error("清空历史失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
     @discardableResult
     func pasteSelected(mode: PasteMode = .original) -> Bool {
-        guard let selectedClip, !selectedClip.isSensitive else {
-            return false
-        }
-
-        if mode == .plainText {
-            return pastePlainText(selectedClip)
-        }
-
-        switch selectedClip.kind {
-        case .image:
-            guard
-                let filename = selectedClip.attachmentFilename,
-                let data = ClipBlobStore.read(filename: filename)
-            else {
-                return false
-            }
-            pasteboard.clearContents()
-            guard pasteboard.setData(data, forType: .png) else {
-                return false
-            }
-
-        case .richText:
-            var wroteRTF = false
-            pasteboard.clearContents()
-            if
-                let filename = selectedClip.attachmentFilename,
-                let rtf = ClipBlobStore.read(filename: filename)
-            {
-                wroteRTF = pasteboard.setData(rtf, forType: .rtf)
-            }
-            // 始终附带纯文本，供「纯文本粘贴」与不支持富文本的目标兜底。
-            let wroteText = pasteboard.setString(selectedClip.content, forType: .string)
-            guard wroteRTF || wroteText else {
-                return false
-            }
-
-        case .file:
-            let urls = selectedClip.content
-                .split(separator: "\n")
-                .map { URL(fileURLWithPath: String($0)) }
-            guard !urls.isEmpty else {
-                return false
-            }
-            pasteboard.clearContents()
-            guard pasteboard.writeObjects(urls as [NSURL]) else {
-                return false
-            }
-
-        default:
-            return pastePlainText(selectedClip)
-        }
-
+        guard let selectedClip, clipboardWriter.write(selectedClip, mode: mode) else { return false }
         clipboardMonitor.syncToCurrentChangeCount()
         return true
     }
@@ -778,7 +733,7 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             clips = try clipStore.fetchClips()
         } catch {
-            print("Failed to load clips: \(error)")
+            AppLogger.storage.error("加载历史失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -807,13 +762,11 @@ final class QuickPanelViewModel: ObservableObject {
         let locallyPruned = pruneInMemoryForHistoryPolicy()
 
         do {
-            let persistedPruned = try clipStore.updateHistoryPolicy(
-                maxHistoryCount: AppSettings.shared.maxHistoryCount,
-                historyRetentionDays: AppSettings.shared.historyRetention.days
-            )
+            let persistedPruned = try clipStore.updateHistoryPolicy(historyPolicy)
+            locallyPruned.forEach { persistDelete(clipID: $0.id) }
             deleteAttachmentBlobs(for: locallyPruned + persistedPruned)
         } catch {
-            print("Failed to apply history policy: \(error)")
+            AppLogger.storage.error("应用历史策略失败：\(error.localizedDescription, privacy: .public)")
         }
 
         selectedID = filteredClips.first?.id
@@ -829,63 +782,18 @@ final class QuickPanelViewModel: ObservableObject {
             let activeFilenames = try clipStore.fetchAttachmentFilenames()
             ClipBlobStore.deleteOrphans(keeping: activeFilenames)
         } catch {
-            print("Failed to prune orphaned blobs: \(error)")
+            AppLogger.storage.error("清理孤立附件失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
     private func pruneInMemoryForHistoryPolicy() -> [ClipItem] {
-        var removed: [ClipItem] = []
-
-        if
-            let retentionDays = AppSettings.shared.historyRetention.days,
-            retentionDays > 0,
-            let cutoffDate = Calendar.current.date(byAdding: .day, value: -retentionDays, to: Date())
-        {
-            let expiredIDs = Set(
-                clips
-                    .filter { !$0.isPinned && $0.updatedAt < cutoffDate }
-                    .map(\.id)
-            )
-
-            if !expiredIDs.isEmpty {
-                removed.append(contentsOf: clips.filter { expiredIDs.contains($0.id) })
-                clips.removeAll { expiredIDs.contains($0.id) }
-            }
-        }
-
-        let overflow = clips.count - maxHistoryCount
-
-        guard overflow > 0 else {
-            return removed
-        }
-
-        let removable = clips
-            .filter { !$0.isPinned }
-            .sorted { $0.updatedAt < $1.updatedAt }
-            .prefix(overflow)
-
-        guard !removable.isEmpty else {
-            return removed
-        }
-
-        let removableIDs = Set(removable.map(\.id))
+        let removed = historyPolicy.itemsToRemove(
+            from: clips,
+            attachmentSize: { ClipBlobStore.size(filename: $0) }
+        )
+        let removableIDs = Set(removed.map(\.id))
         clips.removeAll { removableIDs.contains($0.id) }
-        removed.append(contentsOf: removable)
         return removed
-    }
-
-    private func pastePlainText(_ clip: ClipItem) -> Bool {
-        guard clip.kind != .image else {
-            return false
-        }
-
-        pasteboard.clearContents()
-        guard pasteboard.setString(clip.content, forType: .string) else {
-            return false
-        }
-
-        clipboardMonitor.syncToCurrentChangeCount()
-        return true
     }
 
     private func deleteAttachmentBlobs(for clips: [ClipItem]) {
@@ -905,7 +813,7 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             return try clipStore.upsert(clip)
         } catch {
-            print("Failed to persist clip: \(error)")
+            AppLogger.storage.error("保存历史失败：\(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -922,7 +830,7 @@ final class QuickPanelViewModel: ObservableObject {
                 pinGroupID: clip.pinGroupID
             )
         } catch {
-            print("Failed to persist pin state: \(error)")
+            AppLogger.storage.error("保存固定状态失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -934,7 +842,7 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             try clipStore.updateCustomName(clipID: clip.id, customName: clip.customName)
         } catch {
-            print("Failed to persist custom name: \(error)")
+            AppLogger.storage.error("保存自定义名称失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -946,7 +854,7 @@ final class QuickPanelViewModel: ObservableObject {
         do {
             try clipStore.delete(clipID: clipID)
         } catch {
-            print("Failed to delete clip: \(error)")
+            AppLogger.storage.error("删除历史失败：\(error.localizedDescription, privacy: .public)")
         }
     }
 

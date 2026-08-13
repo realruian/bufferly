@@ -8,16 +8,13 @@ final class ClipStore {
     }
 
     private let dbQueue: DatabaseQueue
-    private var maxHistoryCount: Int
-    private var historyRetentionDays: Int?
+    private var historyPolicy: HistoryPolicy
 
     init(
-        maxHistoryCount: Int = 500,
-        historyRetentionDays: Int? = nil,
+        historyPolicy: HistoryPolicy = HistoryPolicy(maximumItemCount: 500, retentionDays: nil),
         databaseURL: URL? = nil
     ) throws {
-        self.maxHistoryCount = maxHistoryCount
-        self.historyRetentionDays = historyRetentionDays
+        self.historyPolicy = historyPolicy
         let databaseURL = try databaseURL ?? Self.databaseURL()
         try FileManager.default.createDirectory(
             at: databaseURL.deletingLastPathComponent(),
@@ -36,7 +33,7 @@ final class ClipStore {
                 .order(Column("updatedAt").desc)
                 .fetchAll(db)
 
-            let unpinnedLimit = max(0, maxHistoryCount - pinned.count)
+            let unpinnedLimit = max(0, historyPolicy.maximumItemCount - pinned.count)
             let unpinned = try ClipRecord
                 .filter(Column("isPinned") == false)
                 .order(Column("isPinned").desc, Column("updatedAt").desc)
@@ -58,9 +55,8 @@ final class ClipStore {
         }
     }
 
-    func updateHistoryPolicy(maxHistoryCount: Int, historyRetentionDays: Int?) throws -> [ClipItem] {
-        self.maxHistoryCount = maxHistoryCount
-        self.historyRetentionDays = historyRetentionDays
+    func updateHistoryPolicy(_ historyPolicy: HistoryPolicy) throws -> [ClipItem] {
+        self.historyPolicy = historyPolicy
 
         return try dbQueue.write { db in
             let expired = try pruneExpiredIfNeeded(db)
@@ -187,7 +183,7 @@ final class ClipStore {
     private func pruneIfNeeded(_ db: Database) throws -> [ClipItem] {
         let totalCount = try ClipRecord.fetchCount(db)
 
-        guard totalCount > maxHistoryCount else {
+        guard totalCount > historyPolicy.maximumItemCount else {
             return []
         }
 
@@ -200,7 +196,7 @@ final class ClipStore {
             ORDER BY updatedAt ASC
             LIMIT ?
             """,
-            arguments: [totalCount - maxHistoryCount]
+            arguments: [totalCount - historyPolicy.maximumItemCount]
         )
 
         guard !removableIDs.isEmpty else {
@@ -219,15 +215,7 @@ final class ClipStore {
     }
 
     private func pruneExpiredIfNeeded(_ db: Database) throws -> [ClipItem] {
-        guard
-            let historyRetentionDays,
-            historyRetentionDays > 0,
-            let cutoffDate = Calendar.current.date(
-                byAdding: .day,
-                value: -historyRetentionDays,
-                to: Date()
-            )
-        else {
+        guard let cutoffDate = historyPolicy.expirationCutoff() else {
             return []
         }
 

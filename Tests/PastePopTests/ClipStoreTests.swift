@@ -32,4 +32,38 @@ struct ClipStoreTests {
         try store.clearPinGroup(groupID: groupID)
         #expect(try #require(store.fetchClips().first).pinGroupID == nil)
     }
+
+    @Test("历史策略清理旧内容但保留固定内容")
+    func appliesHistoryPolicyWithoutRemovingPinnedItems() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PastePopTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = try ClipStore(
+            historyPolicy: HistoryPolicy(maximumItemCount: 2, retentionDays: nil),
+            databaseURL: directory.appendingPathComponent("clips.sqlite")
+        )
+        let pinned = makeClip(content: "固定", updatedAt: Date().addingTimeInterval(-300), isPinned: true)
+        let old = makeClip(content: "旧内容", updatedAt: Date().addingTimeInterval(-200))
+        let recent = makeClip(content: "新内容", updatedAt: Date().addingTimeInterval(-100))
+
+        try store.upsert(pinned)
+        try store.upsert(old)
+        let removed = try store.upsert(recent)
+
+        #expect(removed.map(\.id) == [old.id])
+        #expect(Set(try store.fetchClips().map(\.id)) == Set([pinned.id, recent.id]))
+    }
+
+    private func makeClip(content: String, updatedAt: Date, isPinned: Bool = false) -> ClipItem {
+        ClipItem(
+            kind: .text,
+            title: content,
+            preview: content,
+            source: "Tests",
+            content: content,
+            updatedAt: updatedAt,
+            isPinned: isPinned
+        )
+    }
 }
