@@ -6,25 +6,27 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**普通 macOS 用户的本地优先剪贴板助手**
+**复制过的，都在手边。**
+
+<sub>原生体验 · 快速流畅 · 私密保存</sub>
 
 ![Platform](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Liquid Glass](https://img.shields.io/badge/UI-Liquid%20Glass-7AA7FF)
-[![License](https://img.shields.io/github/license/realruian/bufferly?color=blue)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/realruian/bufferly?style=social)](https://github.com/realruian/bufferly)
+[![License](https://img.shields.io/github/license/realruian/pastepop?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/realruian/pastepop?style=social)](https://github.com/realruian/pastepop)
 
 <br/>
 
-[![下载 DMG](https://img.shields.io/badge/下载-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/bufferly/releases/latest)
+[![下载 DMG](https://img.shields.io/badge/下载-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/pastepop/releases/latest)
 
-<sub>最新版本见 <a href="https://github.com/realruian/bufferly/releases/latest">Releases</a></sub>
+<sub>最新版本见 <a href="https://github.com/realruian/pastepop/releases/latest">Releases</a></sub>
 
 </div>
 
 ---
 
-复制过的文字、链接、图片和文件，PastePop 自动帮你留住，随时能搜索、筛选、固定并安全粘贴。一切只存在你自己的 Mac 上，不上传任何剪贴板内容，用起来就像系统自带的功能一样自然。
+PastePop 把剪贴板变成一段清晰、可搜索的视觉历史。一个快捷键呼出，几秒找到并粘贴回来。
 
 ## 特性
 
@@ -61,7 +63,7 @@
 
 ### 下载 DMG
 
-1. 从 [Releases](https://github.com/realruian/bufferly/releases/latest) 下载最新的 `PastePop-x.y.z.dmg`。
+1. 从 [Releases](https://github.com/realruian/pastepop/releases/latest) 下载最新的 `PastePop-x.y.z.dmg`。
 2. 打开 DMG，把 PastePop 拖到「应用程序」。
 3. 本地构建尚未公证，首次启动请右键 PastePop 并选择「打开」。
 
@@ -70,8 +72,8 @@ PastePop 当前需要 Apple Silicon 与 macOS 26 Tahoe。
 ### 从源码构建
 
 ```bash
-git clone https://github.com/realruian/bufferly.git
-cd bufferly
+git clone https://github.com/realruian/pastepop.git
+cd pastepop
 
 swift run PastePop            # 开发运行
 bash scripts/build-app.sh     # 构建 .build/PastePop.app

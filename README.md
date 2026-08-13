@@ -6,25 +6,27 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**A local-first clipboard assistant for everyday Mac users**
+**Everything you copy, right at hand.**
+
+<sub>Native on macOS · Fast and fluid · Private by design</sub>
 
 ![Platform](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)
 ![Liquid Glass](https://img.shields.io/badge/UI-Liquid%20Glass-7AA7FF)
-[![License](https://img.shields.io/github/license/realruian/bufferly?color=blue)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/realruian/bufferly?style=social)](https://github.com/realruian/bufferly)
+[![License](https://img.shields.io/github/license/realruian/pastepop?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/realruian/pastepop?style=social)](https://github.com/realruian/pastepop)
 
 <br/>
 
-[![Download DMG](https://img.shields.io/badge/Download-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/bufferly/releases/latest)
+[![Download DMG](https://img.shields.io/badge/Download-PastePop.dmg-7AA7FF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/realruian/pastepop/releases/latest)
 
-<sub>Get the latest build from <a href="https://github.com/realruian/bufferly/releases/latest">Releases</a></sub>
+<sub>Get the latest build from <a href="https://github.com/realruian/pastepop/releases/latest">Releases</a></sub>
 
 </div>
 
 ---
 
-PastePop keeps the text, links, images, and files you copy close at hand. Search, filter, pin, and safely paste them back without sending clipboard contents to the cloud. It is designed to feel like a natural part of macOS.
+PastePop turns your clipboard into a visual, searchable history. Open it with one shortcut, find what you copied, and paste it back in seconds.
 
 ## Features
 
@@ -61,7 +63,7 @@ PastePop keeps the text, links, images, and files you copy close at hand. Search
 
 ### Download the app
 
-1. Download the latest `PastePop-x.y.z.dmg` from [Releases](https://github.com/realruian/bufferly/releases/latest).
+1. Download the latest `PastePop-x.y.z.dmg` from [Releases](https://github.com/realruian/pastepop/releases/latest).
 2. Open the DMG and drag PastePop into Applications.
 3. On first launch, right-click PastePop and choose **Open** because local builds are not notarized.
 
@@ -70,8 +72,8 @@ PastePop currently requires Apple Silicon and macOS 26 Tahoe.
 ### Build from source
 
 ```bash
-git clone https://github.com/realruian/bufferly.git
-cd bufferly
+git clone https://github.com/realruian/pastepop.git
+cd pastepop
 
 swift run PastePop            # Run a development build
 bash scripts/build-app.sh     # Build .build/PastePop.app
